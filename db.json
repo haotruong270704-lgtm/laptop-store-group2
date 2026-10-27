@@ -312,7 +312,7 @@
       "storage": 2048,
       "screen": "16 inch UHD+ OLED",
       "gpu": "NVIDIA RTX 3500 Ada 12GB",
-      "weight": 2.0,
+      "weight": 2,
       "stock": 2,
       "sold": 15,
       "rating": 4.8,
@@ -459,6 +459,19 @@
       "image": "https://placehold.co/600x400/e9ecef/212529?text=HP+ZBook+Firefly+14+G11",
       "description": "Máy trạm mỏng nhẹ đạt chứng nhận ISV.",
       "createdAt": "2026-07-07T08:00:00Z"
+    },
+    {
+      "name": "ádf",
+      "brandName": "sdfasd",
+      "price": 213214324,
+      "stock": 12,
+      "image": "",
+      "cpu": "",
+      "ram": "",
+      "ssd": "",
+      "screen": "",
+      "description": "ádasc",
+      "id": 21
     }
   ],
   "reviews": [
