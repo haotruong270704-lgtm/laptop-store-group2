@@ -8,12 +8,23 @@ export const AuthProvider = ({ children }) => {
     return savedUser ? JSON.parse(savedUser) : null;
   });
 
-  const login = (userData) => {
-    const mockToken = `fake-jwt-token-${Date.now()}`;
-    localStorage.setItem('token', mockToken);
-    localStorage.setItem('user', JSON.stringify(userData));
-    setUser(userData);
-  };
+  const login = async (email, password) => {
+  try {
+    // Gọi json-server lọc user theo email và password
+    const res = await axiosClient.get(`/users?email=${email}&password=${password}`);
+    
+    if (res.data && res.data.length > 0) {
+      const userObj = res.data[0];
+      setUser(userObj); // Cập nhật state
+      localStorage.setItem('user', JSON.stringify(userObj)); // Lưu localStorage
+      return userObj; // Trả về user object thành công
+    }
+    return null;
+  } catch (error) {
+    console.error('Lỗi đăng nhập:', error);
+    return null;
+  }
+};
 
   const logout = () => {
     localStorage.removeItem('token');
