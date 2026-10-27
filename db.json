@@ -93,8 +93,8 @@
       "screen": "13.6 inch Liquid Retina",
       "gpu": "GPU 8 nhân",
       "weight": 1.24,
-      "stock": 15,
-      "sold": 340,
+      "stock": 14,
+      "sold": 341,
       "rating": 4.8,
       "image": "https://placehold.co/600x400/e9ecef/212529?text=MacBook+Air+M3+13+inch",
       "description": "Thiết kế không quạt, êm tuyệt đối, pin 18 giờ.",
@@ -173,8 +173,8 @@
       "screen": "15.6 inch FHD 144Hz",
       "gpu": "NVIDIA RTX 4050 6GB",
       "weight": 2.1,
-      "stock": 12,
-      "sold": 260,
+      "stock": 11,
+      "sold": 261,
       "rating": 4.4,
       "image": "https://placehold.co/600x400/e9ecef/212529?text=Acer+Nitro+V+15",
       "description": "Laptop gaming giá tốt cho sinh viên.",
@@ -333,8 +333,8 @@
       "screen": "15.6 inch FHD",
       "gpu": "Intel UHD Graphics",
       "weight": 1.7,
-      "stock": 30,
-      "sold": 400,
+      "stock": 29,
+      "sold": 401,
       "rating": 4.1,
       "image": "https://placehold.co/600x400/e9ecef/212529?text=Asus+Vivobook+15+X1504",
       "description": "Lựa chọn tiết kiệm cho học tập và văn phòng.",
@@ -585,5 +585,39 @@
     }
   ],
   "cartItems": [],
-  "orders": []
+  "orders": [
+    {
+      "userId": 2,
+      "items": [
+        {
+          "laptopId": 14,
+          "name": "Asus Vivobook 15 X1504",
+          "price": 11490000,
+          "quantity": 1
+        },
+        {
+          "laptopId": 6,
+          "name": "Acer Nitro V 15",
+          "price": 19990000,
+          "quantity": 1
+        },
+        {
+          "laptopId": 2,
+          "name": "MacBook Air M3 13 inch",
+          "price": 27990000,
+          "quantity": 1
+        }
+      ],
+      "customer": {
+        "fullName": "ádf",
+        "phone": "0963315905",
+        "address": "àdsfàdsxcvdxs",
+        "note": "àdsf"
+      },
+      "total": 59470000,
+      "status": "pending",
+      "createdAt": "2026-10-27T15:50:40.004Z",
+      "id": 1
+    }
+  ]
 }

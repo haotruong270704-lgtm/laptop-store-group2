@@ -9,6 +9,7 @@ import OrderListPage from '../pages/OrderListPage';
 import OrderDetailPage from '../pages/OrderDetailPage';
 import AdminLaptopPage from '../pages/AdminLaptopPage';
 import AdminLaptopFormPage from '../pages/AdminLaptopFormPage';
+import AdminOrderPage from '../pages/AdminOrderPage';
 import LoginPage from '../pages/LoginPage';
 import NotFoundPage from '../pages/NotFoundPage';
 
@@ -31,6 +32,7 @@ export default function AppRoutes() {
         <Route path="admin/laptops" element={<AdminLaptopPage />} />
         <Route path="admin/laptops/create" element={<AdminLaptopFormPage />} />
         <Route path="admin/laptops/edit/:id" element={<AdminLaptopFormPage />} />
+        <Route path="admin/orders" element={<AdminOrderPage />} />
       </Route>
 
       {/* Wildcard Route 404 */}
