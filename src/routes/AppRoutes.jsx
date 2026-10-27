@@ -5,7 +5,7 @@ import NotFoundPage from '../pages/NotFoundPage';
 import ProtectedRoute from '../components/common/ProtectedRoute';
 
 import HomePage from '../pages/HomePage';
-const LaptopsPage = () => <h2>Danh sách Laptop</h2>;
+import LaptopListPage from '../pages/LaptopListPage';
 const LoginPage = () => <h2>Trang Đăng Nhập</h2>;
 const ProfilePage = () => <h2>Trang Thông Tin Cá Nhân (Customer)</h2>;
 const AdminDashboard = () => <h2>Dashboard Quản trị (Admin)</h2>;
@@ -16,7 +16,7 @@ const AppRoutes = () => {
       {/* Public Routes */}
       <Route path="/" element={<MainLayout />}>
         <Route index element={<HomePage />} />
-        <Route path="laptops" element={<LaptopsPage />} />
+        <Route path="laptops" element={<LaptopListPage />} />
         <Route path="login" element={<LoginPage />} />
 
         {/* Routes yêu cầu đăng nhập */}
