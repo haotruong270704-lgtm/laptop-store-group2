@@ -127,9 +127,9 @@ export default function HomePage() {
         </div>
       )}
 
-      {error && <ErrorAlert message={error} onRetry={refetch} />}
+      {error && !data && <ErrorAlert message={error} onRetry={refetch} />}
 
-      {!error && (
+      {data && (
         <>
           <section className="mb-4">
             <h5 className="fw-bold mb-3">Mua theo hãng</h5>
