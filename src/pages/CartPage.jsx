@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Alert, Button, ButtonGroup, Card, Image, Table } from 'react-bootstrap';
+import { useEffect, useState } from 'react';
+import { Alert, Button, ButtonGroup, Card, Form, Image, Table } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
 import { useToast } from '../contexts/ToastContext';
@@ -12,14 +12,43 @@ import ErrorAlert from '../components/common/ErrorAlert';
 import EmptyState from '../components/common/EmptyState';
 import ConfirmModal from '../components/common/ConfirmModal';
 
-/** G1. Trang giỏ hàng – dữ liệu lưu thật trong /cartItems */
+/** G1. Trang giỏ hàng – dữ liệu lưu thật trong /cartItems kèm hộp kiểm chọn sản phẩm */
 export default function CartPage() {
   usePageTitle('Giỏ hàng');
   const navigate = useNavigate();
-  const { items, totalPrice, loading, error, updateQuantity, removeItem, reload } = useCart();
+  const { items, loading, error, updateQuantity, removeItem, reload } = useCart();
   const { showToast } = useToast();
   const [pendingId, setPendingId] = useState(null);
   const [itemToRemove, setItemToRemove] = useState(null);
+
+  // Quản lý các ID sản phẩm được tick chọn (mặc định tick chọn tất cả)
+  const [selectedIds, setSelectedIds] = useState(() => (items || []).map((i) => i.id));
+
+  // Đồng bộ lại selectedIds khi danh sách items thay đổi
+  useEffect(() => {
+    setSelectedIds((prev) => {
+      const currentIds = (items || []).map((i) => i.id);
+      const remainingSelected = prev.filter((id) => currentIds.includes(id));
+      // Nếu chưa có sản phẩm nào được chọn (hoặc mới thêm vào), tick chọn tất cả
+      return remainingSelected.length > 0 ? remainingSelected : currentIds;
+    });
+  }, [items]);
+
+  const allSelected = items.length > 0 && selectedIds.length === items.length;
+
+  const toggleSelectAll = () => {
+    if (allSelected) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(items.map((i) => i.id));
+    }
+  };
+
+  const toggleSelect = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
 
   const changeQuantity = async (item, quantity) => {
     if (quantity < 1) {
@@ -40,6 +69,7 @@ export default function CartPage() {
   const confirmRemove = async () => {
     const item = itemToRemove;
     setItemToRemove(null);
+    setSelectedIds((prev) => prev.filter((id) => id !== item.id));
     try {
       await removeItem(item);
       showToast(`Đã xóa "${item.laptop?.name || item.name}" khỏi giỏ hàng`, 'info');
@@ -61,12 +91,36 @@ export default function CartPage() {
     );
   }
 
+  // Lấy các sản phẩm được tick chọn
+  const selectedItems = items.filter((item) => selectedIds.includes(item.id));
+
+  // Tính tổng tiền CHỈ cho các sản phẩm được tick chọn
+  const selectedTotalPrice = selectedItems.reduce((sum, item) => {
+    const laptop = item.laptop || item;
+    const price = getSellingPrice(laptop) || laptop.price || 0;
+    return sum + price * (item.quantity || 1);
+  }, 0);
+
+  const selectedTotalQuantity = selectedItems.reduce(
+    (sum, item) => sum + (item.quantity || 1),
+    0
+  );
+
   // Tồn kho đã giảm sau khi thêm vào giỏ (người khác mua) → chặn đặt hàng
-  const invalidItems = items.filter((item) => item.quantity > (item.laptop?.stock ?? 99));
+  const invalidItems = selectedItems.filter(
+    (item) => item.quantity > (item.laptop?.stock ?? 99)
+  );
 
   return (
     <>
-      <h3 className="fw-bold mb-3">Giỏ hàng</h3>
+      <div className="d-flex justify-content-between align-items-center mb-3">
+        <h3 className="fw-bold mb-0">Giỏ hàng</h3>
+        {selectedItems.length > 0 && (
+          <span className="text-muted">
+            Đã chọn <strong>{selectedItems.length}</strong> / {items.length} loại sản phẩm
+          </span>
+        )}
+      </div>
 
       {invalidItems.length > 0 && (
         <Alert variant="warning">
@@ -82,6 +136,14 @@ export default function CartPage() {
         <Table responsive hover className="mb-0 align-middle">
           <thead className="table-light">
             <tr>
+              <th style={{ width: 48 }} className="text-center">
+                <Form.Check
+                  type="checkbox"
+                  checked={allSelected}
+                  onChange={toggleSelectAll}
+                  aria-label="Chọn tất cả"
+                />
+              </th>
               <th>Sản phẩm</th>
               <th className="text-end">Đơn giá</th>
               <th className="text-center">Số lượng</th>
@@ -95,9 +157,18 @@ export default function CartPage() {
               const price = getSellingPrice(laptop) || laptop.price || 0; // BR-03
               const busy = pendingId === item.id;
               const stock = laptop.stock ?? 99;
+              const isChecked = selectedIds.includes(item.id);
 
               return (
-                <tr key={item.id}>
+                <tr key={item.id} className={isChecked ? 'table-light' : ''}>
+                  <td className="text-center">
+                    <Form.Check
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => toggleSelect(item.id)}
+                      aria-label={`Chọn sản phẩm ${laptop.name}`}
+                    />
+                  </td>
                   <td style={{ minWidth: 240 }}>
                     <div className="d-flex align-items-center gap-2">
                       <Image
@@ -108,7 +179,10 @@ export default function CartPage() {
                         className="border"
                         onError={handleImageError}
                       />
-                      <Link to={`/laptops/${item.laptopId || laptop.id}`} className="text-decoration-none">
+                      <Link
+                        to={`/laptops/${item.laptopId || laptop.id}`}
+                        className="text-decoration-none fw-medium"
+                      >
                         {laptop.name}
                       </Link>
                     </div>
@@ -141,7 +215,11 @@ export default function CartPage() {
                     {formatPrice(price * item.quantity)}
                   </td>
                   <td className="text-end">
-                    <Button variant="outline-danger" size="sm" onClick={() => setItemToRemove(item)}>
+                    <Button
+                      variant="outline-danger"
+                      size="sm"
+                      onClick={() => setItemToRemove(item)}
+                    >
                       Xóa
                     </Button>
                   </td>
@@ -150,20 +228,22 @@ export default function CartPage() {
             })}
           </tbody>
         </Table>
-        <Card.Footer className="d-flex flex-wrap justify-content-between align-items-center gap-2 bg-white">
-          <Button as={Link} to="/laptops" variant="link">
+        <Card.Footer className="d-flex flex-wrap justify-content-between align-items-center gap-3 bg-white py-3">
+          <Button as={Link} to="/laptops" variant="link" className="p-0 text-decoration-none">
             ← Tiếp tục mua sắm
           </Button>
-          <div className="d-flex align-items-center gap-3">
-            <span>
-              Tổng cộng: <strong className="fs-4 text-danger">{formatPrice(totalPrice)}</strong>
+          <div className="d-flex flex-wrap align-items-center gap-3">
+            <span className="fs-6">
+              Đã chọn: <strong className="text-primary">{selectedTotalQuantity}</strong> sản phẩm | Tổng thanh toán:{' '}
+              <strong className="fs-4 text-danger ms-1">{formatPrice(selectedTotalPrice)}</strong>
             </span>
             <Button
               size="lg"
-              disabled={invalidItems.length > 0}
-              onClick={() => navigate('/checkout')}
+              variant="danger"
+              disabled={selectedItems.length === 0 || invalidItems.length > 0}
+              onClick={() => navigate('/checkout', { state: { selectedIds } })}
             >
-              Tiến hành đặt hàng
+              Tiến hành đặt hàng ({selectedItems.length})
             </Button>
           </div>
         </Card.Footer>
