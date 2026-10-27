@@ -12,8 +12,8 @@ import { formatDateTime, formatPrice } from '../utils/format';
 import { getStatus } from '../utils/orderStatus';
 import Loading from '../components/common/Loading';
 import ErrorAlert from '../components/common/ErrorAlert';
-import ConfirmModal from '../components/common/ConfirmModal';
 import { handleImageError } from '../utils/image';
+import { getLaptopImage } from '../utils/laptopImages';
 import dbData from '../../db.json';
 
 export default function OrderDetailPage() {
@@ -208,16 +208,17 @@ export default function OrderDetailPage() {
                 <tr key={item.laptopId}>
                   <td style={{ minWidth: 260 }}>
                     <div className="d-flex align-items-center gap-3">
-                      {lp?.image && (
+                      <div
+                        className="d-flex align-items-center justify-content-center bg-white border rounded p-1"
+                        style={{ width: 64, height: 48, flexShrink: 0 }}
+                      >
                         <Image
-                          src={lp.image}
-                          alt=""
-                          width={64}
-                          rounded
-                          className="border"
+                          src={getLaptopImage(lp || { id: item.laptopId, name: item.name })}
+                          alt={item.name}
+                          style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
                           onError={handleImageError}
                         />
-                      )}
+                      </div>
                       <Link to={`/laptops/${item.laptopId}`} className="text-decoration-none fw-medium text-dark">
                         {item.name}
                       </Link>

@@ -2,6 +2,10 @@ import { useEffect, useState } from 'react';
 import { Container, Table, Button, Form, Card, Spinner, Alert, InputGroup, Modal } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import axiosClient from '../api/axiosClient';
+import catalogApi from '../api/catalogApi';
+import { getLaptopImage } from '../utils/laptopImages';
+import { handleImageError } from '../utils/image';
+import dbData from '../../db.json';
 
 export default function AdminLaptopPage() {
   const [laptops, setLaptops] = useState([]);
@@ -19,8 +23,30 @@ export default function AdminLaptopPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await axiosClient.get('/laptops');
-      setLaptops(res.data || []);
+      const [laptopsRes, brandsRes] = await Promise.allSettled([
+        axiosClient.get('/laptops?_expand=brand'),
+        catalogApi.getBrands(),
+      ]);
+
+      const brandsList =
+        brandsRes.status === 'fulfilled' && brandsRes.value?.length > 0
+          ? brandsRes.value
+          : dbData.brands || [];
+      const brandsMap = Object.fromEntries(brandsList.map((b) => [b.id, b.name]));
+
+      let items = [];
+      if (laptopsRes.status === 'fulfilled') {
+        items = laptopsRes.value.data || [];
+      } else {
+        items = dbData.laptops || [];
+      }
+
+      const mapped = items.map((lp) => ({
+        ...lp,
+        brandName: lp.brand?.name || brandsMap[lp.brandId] || '—',
+      }));
+
+      setLaptops(mapped);
     } catch {
       setError('Không thể tải danh sách sản phẩm!');
     } finally {
@@ -219,17 +245,22 @@ export default function AdminLaptopPage() {
                       <td className="fw-bold">#{laptop.id}</td>
                       <td>
                         <img
-                          src={laptop.image || 'https://via.placeholder.com/60'}
+                          src={getLaptopImage(laptop)}
                           alt={laptop.name}
-                          style={{ width: '50px', height: '50px', objectFit: 'contain' }}
-                          className="rounded border"
+                          style={{ width: '54px', height: '54px', objectFit: 'contain' }}
+                          className="rounded border bg-white p-1"
+                          onError={handleImageError}
                         />
                       </td>
                       <td>
                         <div className="fw-semibold">{laptop.name}</div>
                         <small className="text-muted">{laptop.cpu || ''}</small>
                       </td>
-                      <td>{laptop.brandName}</td>
+                      <td>
+                        <span className="badge bg-light text-dark border px-2 py-1 fs-7">
+                          {laptop.brandName}
+                        </span>
+                      </td>
                       <td className="text-danger fw-bold">{formatMoney(laptop.price)}</td>
                       <td>
                         <Form.Control
@@ -267,7 +298,7 @@ export default function AdminLaptopPage() {
           Bạn có chắc chắn muốn xóa <strong>{selectedIds.length}</strong> sản phẩm đã chọn khỏi hệ thống không? Hành động này không thể hoàn tác.
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowDetailModal(false)} disabled={deleting}>
+          <Button variant="secondary" onClick={() => setShowConfirmModal(false)} disabled={deleting}>
             Hủy
           </Button>
           <Button variant="danger" onClick={handleBulkDelete} disabled={deleting}>

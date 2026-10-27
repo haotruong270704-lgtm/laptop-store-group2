@@ -5,6 +5,7 @@ import StarRating from '../common/StarRating';
 import { useCart } from '../../contexts/CartContext';
 import { useToast } from '../../contexts/ToastContext';
 import { handleImageError } from '../../utils/image';
+import { getLaptopImage } from '../../utils/laptopImages';
 import { useState } from 'react';
 
 const storageLabel = (gb) => (gb >= 1024 ? `${gb / 1024}TB` : `${gb}GB`);
@@ -46,7 +47,7 @@ export default function LaptopCard({ laptop }) {
       <Link to={detailUrl} className="position-relative">
         <Card.Img
           variant="top"
-          src={laptop.image}
+          src={getLaptopImage(laptop)}
           alt={laptop.name}
           className="laptop-card-img"
           onError={handleImageError}
