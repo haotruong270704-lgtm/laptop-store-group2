@@ -1,6 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
-import MainLayout from '../layouts/MainLayout';
-import AdminLayout from '../layouts/AdminLayout';
+import MainLayout from '../components/layout/MainLayout';
+import AdminLayout from '../components/layout/AdminLayout';
 import NotFoundPage from '../pages/NotFoundPage';
 
 // Placeholder các trang tạm thời
