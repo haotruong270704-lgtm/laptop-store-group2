@@ -119,7 +119,9 @@ export default function OrderListPage() {
             <Card key={order.id} className="mb-3 shadow-sm">
               <Card.Header className="d-flex flex-wrap justify-content-between align-items-center gap-2">
                 <span>
-                  <strong>Đơn #{order.id}</strong>
+                  <Link to={`/orders/${order.id}`} className="text-decoration-none text-dark">
+                    <strong>Đơn #{order.id}</strong>
+                  </Link>
                   <span className="text-secondary ms-2 small">{formatDateTime(order.createdAt)}</span>
                 </span>
                 <Badge bg={status.variant}>{status.label}</Badge>
@@ -145,10 +147,13 @@ export default function OrderListPage() {
                 <small className="text-secondary">
                   {order.customer?.fullName} · {order.customer?.phone} · {order.customer?.address}
                 </small>
-                <div className="d-flex align-items-center gap-3">
+                <div className="d-flex align-items-center gap-2">
                   <span>
                     Tổng: <strong className="text-danger">{formatPrice(order.total)}</strong>
                   </span>
+                  <Button as={Link} to={`/orders/${order.id}`} size="sm" variant="outline-primary">
+                    Xem chi tiết →
+                  </Button>
                   {order.status === 'pending' && (
                     <Button size="sm" variant="outline-danger" onClick={() => setOrderToCancel(order)}>
                       Hủy đơn
