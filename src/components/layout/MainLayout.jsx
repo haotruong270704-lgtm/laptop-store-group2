@@ -1,29 +1,27 @@
-import { Outlet, Link } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Container } from 'react-bootstrap';
+import { Outlet, useLocation } from 'react-router-dom';
+import AppNavbar from './AppNavbar';
+import Footer from './Footer';
 
-const MainLayout = () => {
+/** F1. Layout khách hàng: Navbar + nội dung trang (<Outlet />) + Footer */
+export default function MainLayout() {
+  const { pathname } = useLocation();
+
+  // Chuyển trang → cuộn lên đầu
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
   return (
     <div className="d-flex flex-column min-vh-100">
-      <header className="bg-dark text-white p-3">
-        <div className="container d-flex justify-content-between align-items-center">
-          <Link to="/" className="h4 text-white text-decoration-none">LaptopStore</Link>
-          <nav>
-            <Link to="/" className="text-white me-3 text-decoration-none">Trang chủ</Link>
-            <Link to="/laptops" className="text-white me-3 text-decoration-none">Sản phẩm</Link>
-            <Link to="/cart" className="text-white me-3 text-decoration-none">Giỏ hàng</Link>
-            <Link to="/login" className="btn btn-outline-light btn-sm">Đăng nhập</Link>
-          </nav>
-        </div>
-      </header>
-
-      <main className="container my-4 flex-grow-1">
-        <Outlet />
+      <AppNavbar />
+      <main className="flex-grow-1 py-4">
+        <Container>
+          <Outlet />
+        </Container>
       </main>
-
-      <footer className="bg-light text-center py-3 mt-auto border-top">
-        <p className="mb-0 text-muted">&copy; 2026 LaptopStore Group 2. All rights reserved.</p>
-      </footer>
+      <Footer />
     </div>
   );
-};
-
-export default MainLayout;
+}
