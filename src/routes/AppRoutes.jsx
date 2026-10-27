@@ -4,55 +4,24 @@ import AdminLayout from '../components/layout/AdminLayout';
 import NotFoundPage from '../pages/NotFoundPage';
 import ProtectedRoute from '../components/common/ProtectedRoute';
 
-// Placeholder các trang tạm thời
-import { useState, useEffect } from 'react';
-import { Button } from 'react-bootstrap';
-import { useToast } from '../contexts/ToastContext';
-import ConfirmModal from '../components/common/ConfirmModal';
+import laptopApi from '../api/laptopApi';
+import useAxios from '../hooks/useAxios';
+import LaptopGrid from '../components/laptop/LaptopGrid';
+import dbData from '../../db.json';
 
 const HomePage = () => {
-  const { showToast } = useToast();
-  const [showModal, setShowModal] = useState(true);
-
-  useEffect(() => {
-    showToast('Đây là thông báo success!', 'success');
-    showToast('Đây là thông báo danger!', 'danger');
-    showToast('Đây là thông báo warning!', 'warning');
-    showToast('Đây là thông báo info!', 'info');
-  }, [showToast]);
+  const { data, loading } = useAxios((signal) => laptopApi.getAll({ _limit: 8 }, signal), []);
+  const laptops = data?.items?.length ? data.items : dbData.laptops.slice(0, 8);
 
   return (
-    <div className="py-4">
-      <h3 className="mb-4 text-center">Kiểm thử ToastContext &amp; ConfirmModal (#12)</h3>
-      <div className="mb-4 text-center">
-        <h5 className="mb-3">1. Kiểm tra 4 loại Toast thông báo:</h5>
-        {['success', 'danger', 'warning', 'info'].map((v) => (
-          <Button
-            key={v}
-            variant={v}
-            className="me-2 text-capitalize text-white"
-            onClick={() => showToast(`Đây là thông báo ${v}!`, v)}
-          >
-            Toast {v}
-          </Button>
-        ))}
+    <div className="py-2">
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h3 className="fw-bold mb-1">💻 Sản phẩm nổi bật (#15 LaptopGrid)</h3>
+          <p className="text-muted mb-0">Hiển thị thẻ sản phẩm với giá bán, cấu hình, rating sao và trạng thái kho</p>
+        </div>
       </div>
-      <div className="text-center">
-        <h5 className="mb-3">2. Kiểm tra Modal xác nhận (ConfirmModal):</h5>
-        <Button variant="danger" onClick={() => setShowModal(true)}>
-          Mở ConfirmModal xác nhận
-        </Button>
-      </div>
-      <ConfirmModal
-        show={showModal}
-        title="Xác nhận thao tác"
-        message="Bạn có chắc chắn muốn thực hiện thao tác xóa dữ liệu này không?"
-        onConfirm={() => {
-          showToast('Đã xác nhận thao tác thành công!', 'success');
-          setShowModal(false);
-        }}
-        onCancel={() => setShowModal(false)}
-      />
+      <LaptopGrid laptops={laptops} loading={loading} />
     </div>
   );
 };
