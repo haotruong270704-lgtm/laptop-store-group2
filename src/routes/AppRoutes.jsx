@@ -7,6 +7,8 @@ import CartPage from '../pages/CartPage';
 import CheckoutPage from '../pages/CheckoutPage';
 import OrderListPage from '../pages/OrderListPage';
 import OrderDetailPage from '../pages/OrderDetailPage';
+import AdminLaptopPage from '../pages/AdminLaptopPage';
+import LoginPage from '../pages/LoginPage'; // Import LoginPage
 import NotFoundPage from '../pages/NotFoundPage';
 
 export default function AppRoutes() {
@@ -20,6 +22,12 @@ export default function AppRoutes() {
         <Route path="checkout" element={<CheckoutPage />} />
         <Route path="orders" element={<OrderListPage />} />
         <Route path="orders/:id" element={<OrderDetailPage />} />
+
+        {/* Auth Route */}
+        <Route path="login" element={<LoginPage />} />
+
+        {/* Admin Routes */}
+        <Route path="admin/laptops" element={<AdminLaptopPage />} />
       </Route>
 
       {/* Wildcard Route 404 */}
