@@ -69,11 +69,20 @@ export default function AppNavbar() {
                 <NavDropdown.Item as={Link} to="/orders" onClick={collapse}>
                   Đơn hàng của tôi
                 </NavDropdown.Item>
+
                 {isUserAdmin && (
-                  <NavDropdown.Item as={Link} to="/admin" onClick={collapse}>
-                    Quản trị
-                  </NavDropdown.Item>
+                  <>
+                    <NavDropdown.Divider />
+                    <NavDropdown.Header>Quản trị hệ thống</NavDropdown.Header>
+                    <NavDropdown.Item as={Link} to="/admin/laptops" onClick={collapse}>
+                      💻 Quản lý Laptop
+                    </NavDropdown.Item>
+                    <NavDropdown.Item as={Link} to="/admin/orders" onClick={collapse}>
+                      📦 Quản lý Đơn hàng
+                    </NavDropdown.Item>
+                  </>
                 )}
+
                 <NavDropdown.Divider />
                 <NavDropdown.Item onClick={handleLogout}>Đăng xuất</NavDropdown.Item>
               </NavDropdown>
