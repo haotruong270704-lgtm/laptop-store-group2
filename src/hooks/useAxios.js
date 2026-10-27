@@ -1,61 +1,56 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import axiosClient from '../api/axiosClient';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import axiosClient, { getErrorMessage, isCancel } from '../api/axiosClient';
 
 /**
- * Custom hook tự động gọi API và quản lý state (loading, error, data)
- * @param {Object} config Cấu hình request (url, method, params, data, ...)
- * @param {boolean} executeOnMount Có tự động chạy khi component mount hay không (default: true)
+ * H1. Custom hook gom logic loading / data / error / AbortController.
+ * Chuẩn đặc tả bài tập Assignment_code.md (Issue #13).
+ *
+ *   const { data, loading, error, refetch, setData } = useAxios(
+ *     (signal) => laptopApi.getById(id, signal),
+ *     [id]
+ *   );
  */
-export const useAxios = (config, executeOnMount = true) => {
+export default function useAxios(fetcherOrConfig, deps = []) {
   const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(executeOnMount);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
-  // Lưu config vào ref để tránh re-render lặp vô hạn
-  const configRef = useRef(config);
-
-  useEffect(() => {
-    configRef.current = config;
-  }, [config]);
-
-  const fetchData = useCallback(async (customConfig = {}) => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const mergedConfig = { ...configRef.current, ...customConfig };
-      const response = await axiosClient(mergedConfig);
-      setData(response.data);
-      return { responseData: response.data, err: null };
-    } catch (err) {
-      const errorMessage =
-        err.response?.data?.message || err.message || 'Có lỗi xảy ra!';
-      setError(errorMessage);
-      return { responseData: null, err: errorMessage };
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const fetcherRef = useRef(fetcherOrConfig);
+  fetcherRef.current = fetcherOrConfig;
 
   useEffect(() => {
-    if (executeOnMount) {
-      let isSubscribed = true;
+    const controller = new AbortController();
 
-      const runFetch = async () => {
-        const result = await fetchData();
-        if (!isSubscribed) return;
-        return result;
-      };
+    const run = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        let result;
+        if (typeof fetcherRef.current === 'function') {
+          result = await fetcherRef.current(controller.signal);
+        } else {
+          const res = await axiosClient({ ...fetcherRef.current, signal: controller.signal });
+          result = res.data;
+        }
 
-      runFetch();
+        if (controller.signal.aborted) return;
+        setData(result);
+      } catch (err) {
+        if (isCancel(err) || controller.signal.aborted) return;
+        setError(getErrorMessage ? getErrorMessage(err) : (err.message || 'Có lỗi xảy ra'));
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    };
 
-      return () => {
-        isSubscribed = false;
-      };
-    }
-  }, [fetchData, executeOnMount]);
+    run();
 
-  return { data, loading, error, refetch: fetchData };
-};
+    return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reloadKey, ...(Array.isArray(deps) ? deps : [])]);
 
-export default useAxios;
+  const refetch = useCallback(() => setReloadKey((key) => key + 1), []);
+
+  return { data, loading, error, refetch, setData };
+}
