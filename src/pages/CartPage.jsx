@@ -7,6 +7,7 @@ import { getErrorMessage } from '../api/axiosClient';
 import usePageTitle from '../hooks/usePageTitle';
 import { formatPrice, getSellingPrice } from '../utils/format';
 import { handleImageError } from '../utils/image';
+import { getLaptopImage } from '../utils/laptopImages';
 import Loading from '../components/common/Loading';
 import ErrorAlert from '../components/common/ErrorAlert';
 import EmptyState from '../components/common/EmptyState';
@@ -170,18 +171,21 @@ export default function CartPage() {
                     />
                   </td>
                   <td style={{ minWidth: 240 }}>
-                    <div className="d-flex align-items-center gap-2">
-                      <Image
-                        src={laptop.image}
-                        alt=""
-                        width={72}
-                        rounded
-                        className="border"
-                        onError={handleImageError}
-                      />
+                    <div className="d-flex align-items-center gap-3">
+                      <div
+                        className="d-flex align-items-center justify-content-center bg-white border rounded p-1"
+                        style={{ width: 72, height: 54, flexShrink: 0 }}
+                      >
+                        <Image
+                          src={getLaptopImage(laptop)}
+                          alt={laptop.name}
+                          style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                          onError={handleImageError}
+                        />
+                      </div>
                       <Link
                         to={`/laptops/${item.laptopId || laptop.id}`}
-                        className="text-decoration-none fw-medium"
+                        className="text-decoration-none fw-medium text-body"
                       >
                         {laptop.name}
                       </Link>

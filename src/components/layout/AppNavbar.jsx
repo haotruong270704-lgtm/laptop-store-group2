@@ -38,53 +38,68 @@ export default function AppNavbar() {
       className="shadow-sm"
     >
       <Container>
-        <Navbar.Brand as={Link} to="/" onClick={collapse} className="fw-bold">
+        <Navbar.Brand as={Link} to={isUserAdmin ? '/admin/laptops' : '/'} onClick={collapse} className="fw-bold">
           💻 LaptopStore
         </Navbar.Brand>
         <Navbar.Toggle aria-controls="main-navbar" />
         <Navbar.Collapse id="main-navbar">
           <Nav className="me-auto">
-            <Nav.Link as={NavLink} to="/" end eventKey="home">
-              Trang chủ
-            </Nav.Link>
-            <Nav.Link as={NavLink} to="/laptops" eventKey="laptops">
-              Laptop
-            </Nav.Link>
+            {!isUserAdmin && (
+              <>
+                <Nav.Link as={NavLink} to="/" end eventKey="home">
+                  Trang chủ
+                </Nav.Link>
+                <Nav.Link as={NavLink} to="/laptops" eventKey="laptops">
+                  Laptop
+                </Nav.Link>
+              </>
+            )}
           </Nav>
 
-          <div className="mx-lg-3 flex-grow-1 search-wrapper">
-            <SearchSuggest onNavigate={collapse} />
-          </div>
+          {/* Ô tìm kiếm laptop chỉ hiển thị cho Customer / Khách hàng */}
+          {!isUserAdmin && (
+            <div className="mx-lg-3 flex-grow-1 search-wrapper">
+              <SearchSuggest onNavigate={collapse} />
+            </div>
+          )}
 
           <Nav className="align-items-lg-center">
-            <Nav.Link as={NavLink} to="/cart" eventKey="cart" aria-label="Giỏ hàng">
-              🛒 Giỏ hàng{' '}
-              <Badge bg="warning" text="dark" pill>
-                {totalQuantity}
-              </Badge>
-            </Nav.Link>
+            {/* Ẩn giỏ hàng khi người dùng là Admin */}
+            {!isUserAdmin && (
+              <Nav.Link as={NavLink} to="/cart" eventKey="cart" aria-label="Giỏ hàng">
+                🛒 Giỏ hàng{' '}
+                <Badge bg="warning" text="dark" pill>
+                  {totalQuantity}
+                </Badge>
+              </Nav.Link>
+            )}
 
             {user ? (
-              <NavDropdown title={`👤 ${user.fullName || user.email}`} id="account-dropdown" align="end">
-                <NavDropdown.Item as={Link} to="/orders" onClick={collapse}>
-                  Đơn hàng của tôi
-                </NavDropdown.Item>
-
-                {isUserAdmin && (
+              <NavDropdown
+                title={isUserAdmin ? 'Admin' : 'Customer'}
+                id="account-dropdown"
+                align="end"
+              >
+                {isUserAdmin ? (
                   <>
+                    <NavDropdown.Item as={Link} to="/profile" onClick={collapse}>
+                      Profile
+                    </NavDropdown.Item>
                     <NavDropdown.Divider />
-                    <NavDropdown.Header>Quản trị hệ thống</NavDropdown.Header>
-                    <NavDropdown.Item as={Link} to="/admin/laptops" onClick={collapse}>
-                      💻 Quản lý Laptop
+                    <NavDropdown.Item onClick={handleLogout}>Đăng xuất</NavDropdown.Item>
+                  </>
+                ) : (
+                  <>
+                    <NavDropdown.Item as={Link} to="/orders" onClick={collapse}>
+                      Đơn hàng của bạn
                     </NavDropdown.Item>
-                    <NavDropdown.Item as={Link} to="/admin/orders" onClick={collapse}>
-                      📦 Quản lý Đơn hàng
+                    <NavDropdown.Item as={Link} to="/profile" onClick={collapse}>
+                      Profile
                     </NavDropdown.Item>
+                    <NavDropdown.Divider />
+                    <NavDropdown.Item onClick={handleLogout}>Đăng xuất</NavDropdown.Item>
                   </>
                 )}
-
-                <NavDropdown.Divider />
-                <NavDropdown.Item onClick={handleLogout}>Đăng xuất</NavDropdown.Item>
               </NavDropdown>
             ) : (
               <Nav.Link as={NavLink} to="/login" eventKey="login">

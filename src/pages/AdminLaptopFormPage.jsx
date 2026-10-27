@@ -1,105 +1,149 @@
 import { useEffect, useState } from 'react';
-import { Container, Card, Form, Button, Row, Col, Spinner, Alert } from 'react-bootstrap';
-import { useNavigate, useParams, Link } from 'react-router-dom';
-import axiosClient from '../api/axiosClient';
+import { Alert, Breadcrumb, Card, Container, Spinner } from 'react-bootstrap';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import laptopApi from '../api/laptopApi';
+import catalogApi from '../api/catalogApi';
+import { getErrorMessage } from '../api/axiosClient';
+import usePageTitle from '../hooks/usePageTitle';
+import LaptopForm, { EMPTY_LAPTOP, toFormValues } from '../components/laptop/LaptopForm';
+import NotFoundPage from './NotFoundPage';
+import dbData from '../../db.json';
 
 export default function AdminLaptopFormPage() {
-  const { id } = useParams(); // Nếu có id -> Edit, không có id -> Create
+  const { id } = useParams();
   const isEdit = Boolean(id);
+
+  if (id !== undefined && !/^\d+$/.test(id)) return <NotFoundPage />;
+
+  return <LaptopFormScreen key={id ?? 'new'} id={id} isEdit={isEdit} />;
+}
+
+function LaptopFormScreen({ id, isEdit }) {
   const navigate = useNavigate();
+  usePageTitle(isEdit ? `Chỉnh sửa Laptop #${id}` : 'Thêm Laptop Mới');
 
-  const [formData, setFormData] = useState({
-    name: '',
-    brandName: '',
-    price: '',
-    stock: '',
-    image: '',
-    cpu: '',
-    ram: '',
-    ssd: '',
-    screen: '',
-    description: '',
-  });
-
-  const [loading, setLoading] = useState(false);
-  const [fetching, setFetching] = useState(isEdit);
+  const [brands, setBrands] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [initialValues, setInitialValues] = useState(EMPTY_LAPTOP);
+  const [loadingData, setLoadingData] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
-  // Nếu là Edit, fetch dữ liệu laptop hiện tại
   useEffect(() => {
-    if (!isEdit) return;
+    let isMounted = true;
 
-    const fetchLaptopDetail = async () => {
+    const loadFormData = async () => {
+      setLoadingData(true);
+      setError(null);
       try {
-        const res = await axiosClient.get(`/laptops/${id}`);
-        setFormData({
-          name: res.data.name || '',
-          brandName: res.data.brandName || '',
-          price: res.data.price || '',
-          stock: res.data.stock ?? 10,
-          image: res.data.image || '',
-          cpu: res.data.cpu || '',
-          ram: res.data.ram || '',
-          ssd: res.data.ssd || '',
-          screen: res.data.screen || '',
-          description: res.data.description || '',
-        });
-      } catch {
-        setError('Không thể lấy thông tin sản phẩm!');
+        const [brandsRes, categoriesRes, laptopRes] = await Promise.allSettled([
+          catalogApi.getBrands(),
+          catalogApi.getCategories(),
+          isEdit ? laptopApi.getById(id) : Promise.resolve(null),
+        ]);
+
+        if (!isMounted) return;
+
+        // Xử lý danh sách Brands
+        if (brandsRes.status === 'fulfilled' && brandsRes.value?.length > 0) {
+          setBrands(brandsRes.value);
+        } else {
+          setBrands(dbData.brands || []);
+        }
+
+        // Xử lý danh sách Categories
+        if (categoriesRes.status === 'fulfilled' && categoriesRes.value?.length > 0) {
+          setCategories(categoriesRes.value);
+        } else {
+          setCategories(dbData.categories || []);
+        }
+
+        // Nếu là Edit, nạp dữ liệu laptop cũ
+        if (isEdit) {
+          let laptopData = null;
+          if (laptopRes.status === 'fulfilled' && laptopRes.value) {
+            laptopData = laptopRes.value;
+          } else {
+            laptopData = dbData.laptops.find((l) => String(l.id) === String(id));
+          }
+
+          if (laptopData) {
+            setInitialValues(toFormValues(laptopData));
+          } else {
+            setError('Không tìm thấy thông tin sản phẩm cần chỉnh sửa!');
+          }
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(getErrorMessage ? getErrorMessage(err) : 'Lỗi khi tải dữ liệu biểu mẫu');
+        }
       } finally {
-        setFetching(false);
+        if (isMounted) {
+          setLoadingData(false);
+        }
       }
     };
 
-    fetchLaptopDetail();
+    loadFormData();
+
+    return () => {
+      isMounted = false;
+    };
   }, [id, isEdit]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  const handleSubmit = async (payload) => {
+    setSubmitting(true);
     setError(null);
-
-    const payload = {
-      ...formData,
-      price: Number(formData.price),
-      stock: Number(formData.stock),
-    };
-
     try {
       if (isEdit) {
-        await axiosClient.put(`/laptops/${id}`, payload);
+        await laptopApi.update(id, { ...payload, id: Number(id) });
       } else {
-        await axiosClient.post('/laptops', payload);
+        await laptopApi.create({
+          ...payload,
+          sold: 0,
+          rating: 5,
+          createdAt: new Date().toISOString(),
+        });
       }
       navigate('/admin/laptops');
-    } catch {
-      setError(isEdit ? 'Cập nhật thất bại!' : 'Thêm mới thất bại!');
+    } catch (err) {
+      setError(
+        getErrorMessage
+          ? getErrorMessage(err)
+          : isEdit
+          ? 'Cập nhật sản phẩm thất bại!'
+          : 'Thêm mới sản phẩm thất bại!'
+      );
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
-  if (fetching) {
+  if (loadingData) {
     return (
       <Container className="text-center py-5">
         <Spinner animation="border" variant="primary" />
-        <p className="mt-2 text-muted">Đang tải thông tin sản phẩm...</p>
+        <p className="mt-2 text-muted">Đang tải biểu mẫu thông tin laptop...</p>
       </Container>
     );
   }
 
   return (
-    <Container className="py-4" style={{ maxWidth: '900px' }}>
+    <Container className="py-4" style={{ maxWidth: '960px' }}>
+      <Breadcrumb className="mb-3">
+        <Breadcrumb.Item linkAs={Link} linkProps={{ to: '/admin/laptops' }}>
+          Quản lý Laptop
+        </Breadcrumb.Item>
+        <Breadcrumb.Item active>{isEdit ? `Chỉnh sửa #${id}` : 'Thêm mới'}</Breadcrumb.Item>
+      </Breadcrumb>
+
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
           <h2 className="fw-bold mb-1">{isEdit ? 'Chỉnh sửa Laptop' : 'Thêm Laptop Mới'}</h2>
           <p className="text-muted mb-0">
-            {isEdit ? `Cập nhật thông tin cho sản phẩm #${id}` : 'Nhập chi tiết sản phẩm mới vào hệ thống'}
+            {isEdit
+              ? `Cập nhật thông tin chi tiết cho sản phẩm #${id}`
+              : 'Nhập đầy đủ và hợp lệ các trường thông tin sản phẩm'}
           </p>
         </div>
         <Link to="/admin/laptops" className="btn btn-outline-secondary">
@@ -111,155 +155,14 @@ export default function AdminLaptopFormPage() {
 
       <Card className="shadow-sm border-0">
         <Card.Body className="p-4">
-          <Form onSubmit={handleSubmit}>
-            <Row>
-              <Col md={8} className="mb-3">
-                <Form.Group>
-                  <Form.Label className="fw-semibold">Tên sản phẩm *</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="name"
-                    placeholder="VD: Laptop Asus Zenbook 14"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                  />
-                </Form.Group>
-              </Col>
-
-              <Col md={4} className="mb-3">
-                <Form.Group>
-                  <Form.Label className="fw-semibold">Thương hiệu *</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="brandName"
-                    placeholder="VD: ASUS, Dell, Apple"
-                    value={formData.brandName}
-                    onChange={handleChange}
-                    required
-                  />
-                </Form.Group>
-              </Col>
-
-              <Col md={6} className="mb-3">
-                <Form.Group>
-                  <Form.Label className="fw-semibold">Giá bán (VNĐ) *</Form.Label>
-                  <Form.Control
-                    type="number"
-                    name="price"
-                    min="0"
-                    placeholder="20000000"
-                    value={formData.price}
-                    onChange={handleChange}
-                    required
-                  />
-                </Form.Group>
-              </Col>
-
-              <Col md={6} className="mb-3">
-                <Form.Group>
-                  <Form.Label className="fw-semibold">Số lượng tồn kho *</Form.Label>
-                  <Form.Control
-                    type="number"
-                    name="stock"
-                    min="0"
-                    placeholder="10"
-                    value={formData.stock}
-                    onChange={handleChange}
-                    required
-                  />
-                </Form.Group>
-              </Col>
-
-              <Col md={12} className="mb-3">
-                <Form.Group>
-                  <Form.Label className="fw-semibold">Đường dẫn Hình ảnh (URL)</Form.Label>
-                  <Form.Control
-                    type="url"
-                    name="image"
-                    placeholder="https://example.com/laptop.jpg"
-                    value={formData.image}
-                    onChange={handleChange}
-                  />
-                </Form.Group>
-              </Col>
-
-              <Col md={3} className="mb-3">
-                <Form.Group>
-                  <Form.Label className="fw-semibold">CPU</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="cpu"
-                    placeholder="Intel Core i7"
-                    value={formData.cpu}
-                    onChange={handleChange}
-                  />
-                </Form.Group>
-              </Col>
-
-              <Col md={3} className="mb-3">
-                <Form.Group>
-                  <Form.Label className="fw-semibold">RAM</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="ram"
-                    placeholder="16GB"
-                    value={formData.ram}
-                    onChange={handleChange}
-                  />
-                </Form.Group>
-              </Col>
-
-              <Col md={3} className="mb-3">
-                <Form.Group>
-                  <Form.Label className="fw-semibold">Ổ cứng (SSD)</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="ssd"
-                    placeholder="512GB"
-                    value={formData.ssd}
-                    onChange={handleChange}
-                  />
-                </Form.Group>
-              </Col>
-
-              <Col md={3} className="mb-3">
-                <Form.Group>
-                  <Form.Label className="fw-semibold">Màn hình</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="screen"
-                    placeholder='14" FHD'
-                    value={formData.screen}
-                    onChange={handleChange}
-                  />
-                </Form.Group>
-              </Col>
-
-              <Col md={12} className="mb-4">
-                <Form.Group>
-                  <Form.Label className="fw-semibold">Mô tả sản phẩm</Form.Label>
-                  <Form.Control
-                    as="textarea"
-                    rows={4}
-                    name="description"
-                    placeholder="Nhập mô tả chi tiết sản phẩm..."
-                    value={formData.description}
-                    onChange={handleChange}
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
-
-            <div className="d-flex justify-content-end gap-2">
-              <Link to="/admin/laptops" className="btn btn-light px-4">
-                Hủy
-              </Link>
-              <Button type="submit" variant="primary" className="fw-bold px-4" disabled={loading}>
-                {loading ? 'Đang lưu...' : isEdit ? 'Cập nhật' : 'Tạo mới'}
-              </Button>
-            </div>
-          </Form>
+          <LaptopForm
+            initialValues={initialValues}
+            brands={brands}
+            categories={categories}
+            onSubmit={handleSubmit}
+            submitting={submitting}
+            submitText={isEdit ? 'Cập nhật sản phẩm' : 'Tạo mới sản phẩm'}
+          />
         </Card.Body>
       </Card>
     </Container>

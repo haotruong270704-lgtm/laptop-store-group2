@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Container, Table, Badge, Form, Card, Spinner, Alert, Button, Modal } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
 import axiosClient from '../api/axiosClient';
 import orderApi from '../api/orderApi';
 
@@ -107,11 +108,14 @@ export default function AdminOrderPage() {
 
   return (
     <Container className="py-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
+      <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
         <div>
           <h2 className="fw-bold mb-1">Quản lý Đơn hàng</h2>
           <p className="text-muted mb-0">Xem danh sách và cập nhật trạng thái đơn hàng của hệ thống</p>
         </div>
+        <Link to="/admin/laptops" className="btn btn-outline-primary fw-semibold">
+          💻 Quản lý Laptop
+        </Link>
       </div>
 
       {error && <Alert variant="danger">{error}</Alert>}

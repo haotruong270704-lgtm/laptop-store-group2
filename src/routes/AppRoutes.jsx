@@ -11,6 +11,7 @@ import AdminLaptopPage from '../pages/AdminLaptopPage';
 import AdminLaptopFormPage from '../pages/AdminLaptopFormPage';
 import AdminOrderPage from '../pages/AdminOrderPage';
 import LoginPage from '../pages/LoginPage';
+import ProfilePage from '../pages/ProfilePage';
 import NotFoundPage from '../pages/NotFoundPage';
 
 export default function AppRoutes() {
@@ -24,6 +25,9 @@ export default function AppRoutes() {
         <Route path="checkout" element={<CheckoutPage />} />
         <Route path="orders" element={<OrderListPage />} />
         <Route path="orders/:id" element={<OrderDetailPage />} />
+
+        {/* User Profile */}
+        <Route path="profile" element={<ProfilePage />} />
 
         {/* Auth Route */}
         <Route path="login" element={<LoginPage />} />
