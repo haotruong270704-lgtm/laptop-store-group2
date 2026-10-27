@@ -7,6 +7,7 @@ import cartApi from '../api/cartApi';
 import { getErrorMessage } from '../api/axiosClient';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
+import { useToast } from '../contexts/ToastContext';
 import usePageTitle from '../hooks/usePageTitle';
 import { formatPrice, getSellingPrice } from '../utils/format';
 import Loading from '../components/common/Loading';
@@ -27,6 +28,7 @@ export default function CheckoutPage() {
   const location = useLocation();
   const { user } = useAuth();
   const { items, totalPrice, loading, clearLocal } = useCart();
+  const { showToast } = useToast();
   const placedRef = useRef(false);
 
   // Lọc theo các sản phẩm được chọn từ giỏ hàng nếu có
@@ -139,7 +141,21 @@ export default function CheckoutPage() {
       // Bước 5 – Chuyển trang kèm thông báo
       placedRef.current = true;
       clearLocal();
-      navigate('/orders', { state: { message: `Đặt hàng thành công! Mã đơn #${order.id}` } });
+
+      // Lưu trữ đơn hàng offline vào localStorage
+      try {
+        const storedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+        localStorage.setItem('orders', JSON.stringify([order, ...storedOrders]));
+      } catch {
+        // ignore
+      }
+
+      showToast(`Đặt hàng thành công! Mã đơn #${order.id}`, 'success');
+
+      // Chờ 3s theo yêu cầu rồi chuyển qua trang đơn hàng của tôi
+      setTimeout(() => {
+        navigate('/orders');
+      }, 3000);
     } catch (err) {
       setError(getErrorMessage ? getErrorMessage(err) : err.message || 'Lỗi xử lý đơn hàng');
       setPlacing(false);

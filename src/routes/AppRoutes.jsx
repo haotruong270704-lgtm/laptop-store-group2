@@ -5,6 +5,8 @@ import LaptopListPage from '../pages/LaptopListPage';
 import LaptopDetailPage from '../pages/LaptopDetailPage';
 import CartPage from '../pages/CartPage';
 import CheckoutPage from '../pages/CheckoutPage';
+import OrderListPage from '../pages/OrderListPage';
+import OrderDetailPage from '../pages/OrderDetailPage';
 import NotFoundPage from '../pages/NotFoundPage';
 
 export default function AppRoutes() {
@@ -16,6 +18,8 @@ export default function AppRoutes() {
         <Route path="laptops/:id" element={<LaptopDetailPage />} />
         <Route path="cart" element={<CartPage />} />
         <Route path="checkout" element={<CheckoutPage />} />
+        <Route path="orders" element={<OrderListPage />} />
+        <Route path="orders/:id" element={<OrderDetailPage />} />
       </Route>
 
       {/* Wildcard Route 404 */}

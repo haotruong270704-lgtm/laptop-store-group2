@@ -10,6 +10,12 @@ const orderApi = {
     return res.data;
   },
 
+  /** Lấy chi tiết một đơn hàng theo id */
+  async getById(id, signal) {
+    const res = await axiosClient.get(`/orders/${id}`, { signal });
+    return res.data;
+  },
+
   /** Admin: tất cả đơn hàng, có thể lọc theo status */
   async getAll(params = {}, signal) {
     const res = await axiosClient.get('/orders', {
